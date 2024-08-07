@@ -13,7 +13,7 @@ int main(int argc,char **args) {
     Vec           b,u,uexact;
     KSP           ksp;
     PetscReal     errnorm;
-    DMDALocalInfo info;
+                                                                                                                    DMDALocalInfo info;
 
     PetscCall(PetscInitialize(&argc,&args,NULL,help));
 
@@ -100,7 +100,6 @@ PetscErrorCode formMatrix(DM da, Mat A) {
                     v[ncols++] = -hx/hy;
                 }
             }
-	    printf("ncols: %i, i: %i, j: %i\n", ncols, i, j);
             PetscCall(MatSetValuesStencil(A,1,&row,ncols,col,v,INSERT_VALUES));
         }
     }
@@ -123,7 +122,8 @@ PetscErrorCode formExact(DM da, Vec uexact) {
         y = j * hy;
         for (i = info.xs; i < info.xs+info.xm; i++) {
             x = i * hx;
-            auexact[j][i] = x*x * (1.0 - x*x) * y*y * (y*y - 1.0);
+	    auexact[j][i] = 3.0 * x + sin(20.0 * x * y);
+	    //	    printf("%.6f\n", sin(20.0 * x * y));
         }
     }
     PetscCall(DMDAVecRestoreArray(da, uexact, &auexact));
@@ -132,7 +132,7 @@ PetscErrorCode formExact(DM da, Vec uexact) {
 
 PetscErrorCode formRHS(DM da, Vec b) {
     PetscInt       i, j;
-    PetscReal      hx, hy, x, y, f, **ab;
+    PetscReal      hx, hy, x, y, f, x_, y_, u, **ab;
     DMDALocalInfo  info;
 
     PetscCall(DMDAGetLocalInfo(da,&info));
@@ -143,12 +143,38 @@ PetscErrorCode formRHS(DM da, Vec b) {
         for (i=info.xs; i<info.xs+info.xm; i++) {
             x = i * hx;
             if (i==0 || i==info.mx-1 || j==0 || j==info.my-1) {
-                ab[j][i] = 0.0;  // on boundary: 1*u = 0
+	      u = 3.0 * x + sin(20.0 * x * y);
+	      ab[j][i] = u;  // on boundary: 1*u = 0
             } else {
-                f = 2.0 * ( (1.0 - 6.0*x*x) * y*y * (1.0 - y*y)
-                    + (1.0 - 6.0*y*y) * x*x * (1.0 - x*x) );
-                ab[j][i] = hx * hy * f;
+	      f = 400.0 * (x * x + y * y) * sin(20.0 * x * y);
+	      ab[j][i] = hx * hy * f;
+
+	      if (i == 1) {
+		x_ = x - hx;
+		y_ = y;
+		u = 3.0 * x_ + sin(20.0 * x_ * y_);
+		ab[j][i] += hy * u / hx;		
+	      }
+	      if (i == info.mx - 2) {
+		x_ = x + hx;
+		y_ = y;
+		u = 3.0 * x_ + sin(20.0 * x_ * y_);
+		ab[j][i] += + hy * u / hx;		
+	      }
+	      if (j == 1) {
+		x_ = x;
+		y_ = y - hy;
+		u = 3.0 * x_ + sin(20.0 * x_ * y_);
+		ab[j][i] += hx * u / hy;
+	      }
+	      if (j == info.my - 2) {
+		x_ = x;
+		y_ = y + hy;
+		u = 3.0 * x_ + sin(20.0 * x_ * y_);
+		ab[j][i] += hx * u / hy;
+	      }
             }
+    
         }
     }
     PetscCall(DMDAVecRestoreArray(da, b, &ab));

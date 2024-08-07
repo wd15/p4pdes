@@ -6,6 +6,22 @@ poisson: poisson.o
 	-${CLINKER} -o poisson poisson.o ${PETSC_LIB}
 	${RM} poisson.o
 
+poisson1D: poisson1D.o
+	-${CLINKER} -o poisson1D poisson1D.o ${PETSC_LIB}
+	${RM} poisson1D.o
+
+poisson_modify: poisson_modify.o
+	-${CLINKER} -o poisson_modify poisson_modify.o ${PETSC_LIB}
+	${RM} poisson_modify.o
+
+poisson_dirichlet: poisson_dirichlet.o
+	-${CLINKER} -o poisson_dirichlet poisson_dirichlet.o ${PETSC_LIB}
+	${RM} poisson_dirichlet.o
+
+poisson3D: poisson3D.o
+	-${CLINKER} -o poisson3D poisson3D.o ${PETSC_LIB}
+	${RM} poisson3D.o
+
 # testing
 runpoisson_1:
 	-@../testit.sh poisson "-da_grid_x 5 -da_grid_y 7" 1 1
@@ -27,5 +43,5 @@ test: test_poisson
 distclean: clean
 
 clean::
-	@rm -f *~ poisson *tmp
+	@rm -f *~ poisson poisson1D *tmp poisson_modify poisson_dirichlet poisson3D
 
